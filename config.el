@@ -33,11 +33,11 @@
 
 ;; If you intend to use org, it is recommended you change this!
 (setq org-directory "~/org/")
+(require 'org)
 
 ;; If you want to change the style of line numbers, change this to `relative' or
 ;; `nil' to disable it:
 (setq display-line-numbers-type t)
-(split-window-vertically)
 
 
 ;; Here are some additional functions/macros that could help you configure Doom:
@@ -82,53 +82,7 @@
 (use-package hydra
   :defer t)
 
-;; ======== WEB MODE ========
-(require 'web-mode)
-(use-package web-mode
-  :defer t)
-(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 
- (add-hook 'web-mode-hook (lambda ()
-                            (set (make-local-variable 'company-backends) '(company-web-html))
-                            (company-mode t)))
-(add-hook 'web-mode-hook #'smartparens-mode)
-(add-hook 'web-mode-hook #'evil-smartparens-mode)
-
-;; ======== JAVASCRIPT ========
-(require 'js2-mode)
-(use-package js2-mode
-  :defer t
-  :init
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  (setq js2-include-node-externs t)
-  (setq js2-include-browser-externs t)
-  (setq js2-highlight-level 3)
-  :config
-  ;; better imenu
-  ;; (js2-imenu-extras-mode)
-  ;; tern autocompletion
-  ;; (use-package company-tern)
-  ;; (add-to-list 'company-backends 'company-tern)
-  (add-hook 'js2-mode-hook (lambda ()
-                             ;; (tern-mode)
-                             (company-mode)
-                             (smartparens-mode)
-                             (evil-smartparens-mode)
-                             (flycheck-mode)))
-  (define-key js-mode-map (kbd "M-.") nil)
-  )
-
-
-(use-package js2-refactor
-  :hook (js2-mode . js2-refactor-mode)
-  :config
-  (js2r-add-keybindings-with-prefix "C-c C-m"))
-
-(use-package xref-js2
-  :defer t
-  :config
-  (define-key js2-mode-map (kbd "C-k") #'js2r-kill)
-  )
 ;;============MAGIT GIT FLOW ===========
 ;;; C-f in the magit status buffer invokes the magit-gitflow popup. If you
 ;;; would like to use a different key, set the magit-gitflow-popup-key variable
@@ -150,161 +104,206 @@
   :hook (js2-mode . add-node-modules-path))
 ;;Just for keybinding in REPL mode
 (evil-make-overriding-map indium-debugger-mode-map)
-(add-hook 'test-hook 'indium-launch)
 
-(defun test-hook()
-  (message "test hooka")
-  )
 (evil-make-overriding-map indium-debugger-locals-mode-map)
-;; setup mode hooks
-(sp-local-pair 'js2-mode "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
-(add-hook 'js2-mode-hook (lambda ()
-                           (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
 
-;; js2-refactor hydra
-(defhydra hydra-js2-refactor (:color blue :hint nil)
-  "
-^Functions^                    ^Variables^               ^Buffer^                      ^sexp^               ^Debugging^
-------------------------------------------------------------------------------------------------------------------------------
-[_lp_] Localize Parameter      [_ev_] Extract variable   [_wi_] Wrap buffer in IIFE    [_k_]  js2 kill      [_lt_] log this
-[_ef_] Extract function        [_iv_] Inline variable    [_ig_] Inject global in IIFE  [_ss_] split string  [_dt_] debug this
-[_ip_] Introduce parameter     [_rv_] Rename variable    [_ee_] Expand node at point   [_sl_] forward slurp
-[_em_] Extract method          [_vt_] Var to this        [_cc_] Contract node at point [_ba_] forward barf
-[_ao_] Arguments to object     [_sv_] Split var decl.    [_uw_] unwrap
-[_tf_] Toggle fun exp and decl [_ag_] Add var to globals
-[_ta_] Toggle fun expr and =>  [_ti_] Ternary to if
-[_z_] return                   [_q_]  quit"
-  ("ee" js2r-expand-node-at-point)
-  ("cc" js2r-contract-node-at-point)
-  ("ef" js2r-extract-function)
-  ("em" js2r-extract-method)
-  ("tf" js2r-toggle-function-expression-and-declaration)
-  ("ta" js2r-toggle-arrow-function-and-expression)
-  ("ip" js2r-introduce-parameter)
-  ("lp" js2r-localize-parameter)
-  ("wi" js2r-wrap-buffer-in-iife)
-  ("ig" js2r-inject-global-in-iife)
-  ("ag" js2r-add-to-globals-annotation)
-  ("ev" js2r-extract-var)
-  ("iv" js2r-inline-var)
-  ("rv" js2r-rename-var)
-  ("vt" js2r-var-to-this)
-  ("ao" js2r-arguments-to-object)
-  ("ti" js2r-ternary-to-if)
-  ("sv" js2r-split-var-declaration)
-  ("ss" js2r-split-string)
-  ("uw" js2r-unwrap)
-  ("lt" js2r-log-this)
-  ("dt" js2r-debug-this)
-  ("sl" js2r-forward-slurp)
-  ("ba" js2r-forward-barf)
-  ("k" js2r-kill)
-  ("q" nil)
-  ("z" hydra-javascript/body)
-  )
+;; ======== WEB MODE ========
+(require 'web-mode)
+(use-package web-mode
+  :defer t)
+(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 
-(defhydra hydra-javascript (:color red
-                                   :hint nil)
-  "
-  ^Buffer^                    ^Errors/Format^             ^Refactor^                   ^Indium^                 ^Tide^
----------------------------------------------------------------------------------------------------------------------------------------
-[_d_]   Documentation         [_e_] Flycheck            [_rs_]  Rename symbol         [_in_]  Indium node       [_*_]  Restart server
-[_fd_]  Find definition       [_a_] Apply error fix     [_rf_]  Refactor              [_ic_]  Indium chrome     [_v_]  Verify setup
-[_fr_]  Find references       [_t_]  Tide format        [_rj_]  js2-refactor          [_is_]  Indium scratch    [_oi_]  Organize imports
-[_fj_]  Jump to func def      [_c_]  JSDoc comment
-[_fw_]  Show func def window
-[_fx_]  xref find refs
-"
-  ("d" tide-documentation-at-point :exit t)
-  ("fd" tide-jump-to-definition :exit t)
-  ("fr" tide-references :exit t)
-  ("fj" xref-find-definitions)
-  ("fw" xref-find-definitions-other-window)
-  ("fx" xref-find-references)
-  ("e" hydra-flycheck/body :exit t)
-  ("a" tide-fix :exit t)
-  ("t" tide-format :exit t)
-  ("c" tide-jsdoc-template :exit t)
-  ("rs" tide-rename-symbol :exit t)
-  ("rf" tide-refactor :exit t)
-  ("rj" hydra-js2-refactor/body :exit t)
-  ("in" indium-connect-to-nodejs :exit t)
-  ("ic" indium-connect-to-chrome :exit t)
-  ("is" indium-scratch :exit t)
-  ("*" tide-restart-server :exit t)
-  ("v" tide-verify-setup :exit t)
-  ("oi" tide-organize-imports :exit t)
-  )
-;; ============ TYPESCRIPT =================
-(require 'prettier-js)
-(require 'tide)
-(dolist (hook (list
-               'js2-mode-hook
-               'rjsx-mode-hook
-               'typescript-mode-hook
-               ))
-  (add-hook hook (lambda ()
-                   ;; 初始化 tide
-                   (interactive)
-                   (tide-setup)
-                   (flycheck-mode +1)
-                   (setq flycheck-check-syntax-automatically '(mode-enable save))
-                   (flycheck-add-next-checker 'typescript-tide
-                                              'typescript-tslint)
-                   (prettier-js-mode)
+ (add-hook 'web-mode-hook (lambda ()
+                            (set (make-local-variable 'company-backends) '(company-web-html))
+                            (company-mode t)))
+(add-hook 'web-mode-hook #'smartparens-mode)
+(add-hook 'web-mode-hook #'evil-smartparens-mode)
 
-                   (eldoc-mode)
-                   (eldoc-mode +1)
-                   (tide-hl-identifier-mode +1)
+;; ;; ======== JAVASCRIPT ========
+;; (require 'js2-mode)
+;; (use-package js2-mode
+;;   :defer t
+;;   :init
+;;   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+;;   (setq js2-include-node-externs t)
+;;   (setq js2-include-browser-externs t)
+;;   (setq js2-highlight-level 3)
+;;   :config
+;;   ;; better imenu
+;;   ;; (js2-imenu-extras-mode)
+;;   ;; tern autocompletion
+;;   ;; (use-package company-tern)
+;;   ;; (add-to-list 'company-backends 'company-tern)
+;;   (add-hook 'js2-mode-hook (lambda ()
+;;                              ;; (tern-mode)
+;;                              (company-mode)
+;;                              (smartparens-mode)
+;;                              (evil-smartparens-mode)
+;;                              (flycheck-mode)))
+;;   (define-key js-mode-map (kbd "M-.") nil)
+;;   )
 
-                   (setq tide-user-preferences '(:includeCompletionsForModuleExports t :includeCompletionsWithInsertText t :allowTextChangesInNewFiles t))
-                   ;; company is an optional dependency. You have to
-                   ;; install it separately via package-install
-                   ;; `M-x package-install [ret] company`
-                   (company-mode +1)
-                   (set (make-local-variable 'company-backends)
-                        '((company-tide company-files :with company-yasnippet)
-                          (company-dabbrev-code company-dabbrev)))
-                   (setq company-minimum-prefix-length 1)
-                   ;; 当 tsserver 服务没有启动时自动重新启动
-                   (unless (tide-current-server)
-                     (tide-restart-server))
-                   )))
-(setq display-line-numbers-type 'relative)
 
-;; configure smartparens
-(add-hook 'typescript-mode-hook #'smartparens-mode)
-(add-hook 'typescript-mode-hook #'evil-smartparens-mode)
-(add-hook 'typescript-mode-hook 'prettier-js-mode)
-(add-hook 'typescript-mode-hook #'indium-interaction-mode)
+;; (use-package js2-refactor
+;;   :hook (js2-mode . js2-refactor-mode)
+;;   :config
+;;   (js2r-add-keybindings-with-prefix "C-c C-m"))
 
-(sp-local-pair 'typescript-mode "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
-(add-hook 'typescript-mode-hook #'add-node-modules-path)
-(require 'restclient)
-(defhydra hydra-typescript (:color red
-                                   :hint nil )
+;; (use-package xref-js2
+;;   :defer t
+;;   :config
+;;   (define-key js2-mode-map (kbd "C-k") #'js2r-kill)
+;;   )
+;; ;; setup mode hooks
+;; (sp-local-pair 'js2-mode "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
+;; (add-hook 'js2-mode-hook (lambda ()
+;;                            (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
 
-  "
-  ^Buffer^                 ^Errors^                   ^Refactor^                   ^Format^                 ^Tide^
-------------------------------------------------------------------------------------------------------------------------------------
-[_d_]   Documentation      [_e_] Errors              [_rs_]  Rename symbol         [_t_]  Tide format       [_*_]  Restart server
-[_fd_]  Find definition    [_a_] Apply error fix     [_rf_]  Refactor              [_c_]  JSDoc comment     [_v_]  Verify setup
-[_fr_]  Find references                                                                               [_i_]  Organize imports
-"
-  ("a" tide-fix :exit t)
-  ("d" tide-documentation-at-point :exit t)
-  ("fd" tide-jump-to-definition :exit t)
-  ("fr" tide-references :exit t)
-  ("c" tide-jsdoc-template :exit t)
-  ("e" tide-project-errors :exit t)
-  ("rs" tide-rename-symbol :exit t)
-  ("rf" tide-refactor :exit t)
-  ("t" tide-format :exit t)
-  ("*" tide-restart-server :exit t)
-  ("v" tide-verify-setup :exit t)
-  ("i" tide-organize-imports :exit t)
-  )
-;;COMPANY MODE key bidings
+;; ;; js2-refactor hydra
+;; (defhydra hydra-js2-refactor (:color blue :hint nil)
+;;   "
+;; ^Functions^                    ^Variables^               ^Buffer^                      ^sexp^               ^Debugging^
+;; ------------------------------------------------------------------------------------------------------------------------------
+;; [_lp_] Localize Parameter      [_ev_] Extract variable   [_wi_] Wrap buffer in IIFE    [_k_]  js2 kill      [_lt_] log this
+;; [_ef_] Extract function        [_iv_] Inline variable    [_ig_] Inject global in IIFE  [_ss_] split string  [_dt_] debug this
+;; [_ip_] Introduce parameter     [_rv_] Rename variable    [_ee_] Expand node at point   [_sl_] forward slurp
+;; [_em_] Extract method          [_vt_] Var to this        [_cc_] Contract node at point [_ba_] forward barf
+;; [_ao_] Arguments to object     [_sv_] Split var decl.    [_uw_] unwrap
+;; [_tf_] Toggle fun exp and decl [_ag_] Add var to globals
+;; [_ta_] Toggle fun expr and =>  [_ti_] Ternary to if
+;; [_z_] return                   [_q_]  quit"
+;;   ("ee" js2r-expand-node-at-point)
+;;   ("cc" js2r-contract-node-at-point)
+;;   ("ef" js2r-extract-function)
+;;   ("em" js2r-extract-method)
+;;   ("tf" js2r-toggle-function-expression-and-declaration)
+;;   ("ta" js2r-toggle-arrow-function-and-expression)
+;;   ("ip" js2r-introduce-parameter)
+;;   ("lp" js2r-localize-parameter)
+;;   ("wi" js2r-wrap-buffer-in-iife)
+;;   ("ig" js2r-inject-global-in-iife)
+;;   ("ag" js2r-add-to-globals-annotation)
+;;   ("ev" js2r-extract-var)
+;;   ("iv" js2r-inline-var)
+;;   ("rv" js2r-rename-var)
+;;   ("vt" js2r-var-to-this)
+;;   ("ao" js2r-arguments-to-object)
+;;   ("ti" js2r-ternary-to-if)
+;;   ("sv" js2r-split-var-declaration)
+;;   ("ss" js2r-split-string)
+;;   ("uw" js2r-unwrap)
+;;   ("lt" js2r-log-this)
+;;   ("dt" js2r-debug-this)
+;;   ("sl" js2r-forward-slurp)
+;;   ("ba" js2r-forward-barf)
+;;   ("k" js2r-kill)
+;;   ("q" nil)
+;;   ("z" hydra-javascript/body)
+;;   )
+
+;; (defhydra hydra-javascript (:color red
+;;                                    :hint nil)
+;;   "
+;;   ^Buffer^                    ^Errors/Format^             ^Refactor^                   ^Indium^                 ^Tide^
+;; ---------------------------------------------------------------------------------------------------------------------------------------
+;; [_d_]   Documentation         [_e_] Flycheck            [_rs_]  Rename symbol         [_in_]  Indium node       [_*_]  Restart server
+;; [_fd_]  Find definition       [_a_] Apply error fix     [_rf_]  Refactor              [_ic_]  Indium chrome     [_v_]  Verify setup
+;; [_fr_]  Find references       [_t_]  Tide format        [_rj_]  js2-refactor          [_is_]  Indium scratch    [_oi_]  Organize imports
+;; [_fj_]  Jump to func def      [_c_]  JSDoc comment
+;; [_fw_]  Show func def window
+;; [_fx_]  xref find refs
+;; "
+;;   ("d" tide-documentation-at-point :exit t)
+;;   ("fd" tide-jump-to-definition :exit t)
+;;   ("fr" tide-references :exit t)
+;;   ("fj" xref-find-definitions)
+;;   ("fw" xref-find-definitions-other-window)
+;;   ("fx" xref-find-references)
+;;   ("e" hydra-flycheck/body :exit t)
+;;   ("a" tide-fix :exit t)
+;;   ("t" tide-format :exit t)
+;;   ("c" tide-jsdoc-template :exit t)
+;;   ("rs" tide-rename-symbol :exit t)
+;;   ("rf" tide-refactor :exit t)
+;;   ("rj" hydra-js2-refactor/body :exit t)
+;;   ("in" indium-connect-to-nodejs :exit t)
+;;   ("ic" indium-connect-to-chrome :exit t)
+;;   ("is" indium-scratch :exit t)
+;;   ("*" tide-restart-server :exit t)
+;;   ("v" tide-verify-setup :exit t)
+;;   ("oi" tide-organize-imports :exit t)
+;;   )
+;; ;; ;; ============ TYPESCRIPT =================
+;; (require 'prettier-js)
+;; (require 'tide)
+;; (dolist (hook (list
+;;                'js2-mode-hook
+;;                'rjsx-mode-hook
+;;                'typescript-mode-hook
+;;                ))
+;;   (add-hook hook (lambda ()
+;;                    ;; 初始化 tide
+;;                    (interactive)
+;;                    (tide-setup)
+;;                    (flycheck-mode +1)
+;;                    (setq flycheck-check-syntax-automatically '(mode-enable save))
+;;                    (flycheck-add-next-checker 'typescript-tide
+;;                                               'typescript-tslint)
+;;                    (prettier-js-mode)
+
+;;                    (eldoc-mode)
+;;                    (eldoc-mode +1)
+;;                    (tide-hl-identifier-mode +1)
+
+;;                    (setq tide-user-preferences '(:includeCompletionsForModuleExports t :includeCompletionsWithInsertText t :allowTextChangesInNewFiles t))
+;;                    ;; company is an optional dependency. You have to
+;;                    ;; install it separately via package-install
+;;                    ;; `M-x package-install [ret] company`
+;;                    (company-mode +1)
+;;                    (set (make-local-variable 'company-backends)
+;;                         '((company-tide company-files :with company-yasnippet)
+;;                           (company-dabbrev-code company-dabbrev)))
+;;                    (setq company-minimum-prefix-length 1)
+;;                    ;; 当 tsserver 服务没有启动时自动重新启动
+;;                    (unless (tide-current-server)
+;;                      (tide-restart-server))
+;;                    )))
+;; (setq display-line-numbers-type 'relative)
+
+;; ;; configure smartparens
+;; (add-hook 'typescript-mode-hook #'smartparens-mode)
+;; (add-hook 'typescript-mode-hook #'evil-smartparens-mode)
+;; (add-hook 'typescript-mode-hook 'prettier-js-mode)
+;; (add-hook 'typescript-mode-hook #'indium-interaction-mode)
+
+;; (sp-local-pair 'typescript-mode "{" nil :post-handlers '((my-create-newline-and-enter-sexp "RET")))
+;; (add-hook 'typescript-mode-hook #'add-node-modules-path)
+;; (require 'restclient)
+;; (defhydra hydra-typescript (:color red
+;;                                    :hint nil )
+
+;;   "
+;;   ^Buffer^                 ^Errors^                   ^Refactor^                   ^Format^                 ^Tide^
+;; ------------------------------------------------------------------------------------------------------------------------------------
+;; [_d_]   Documentation      [_e_] Errors              [_rs_]  Rename symbol         [_t_]  Tide format       [_*_]  Restart server
+;; [_fd_]  Find definition    [_a_] Apply error fix     [_rf_]  Refactor              [_c_]  JSDoc comment     [_v_]  Verify setup
+;; [_fr_]  Find references                                                                               [_i_]  Organize imports
+;; "
+;;   ("a" tide-fix :exit t)
+;;   ("d" tide-documentation-at-point :exit t)
+;;   ("fd" tide-jump-to-definition :exit t)
+;;   ("fr" tide-references :exit t)
+;;   ("c" tide-jsdoc-template :exit t)
+;;   ("e" tide-project-errors :exit t)
+;;   ("rs" tide-rename-symbol :exit t)
+;;   ("rf" tide-refactor :exit t)
+;;   ("t" tide-format :exit t)
+;;   ("*" tide-restart-server :exit t)
+;;   ("v" tide-verify-setup :exit t)
+;;   ("i" tide-organize-imports :exit t)
+;;   )
+
+;; ;;COMPANY MODE key bidings
 (use-package company
   :demand t
   :bind (;; Replace `completion-at-point' and `complete-symbol' with
@@ -526,95 +525,98 @@ This is an `:around' advice for `yas--make-control-overlay'."
    (typescript . t)))
 ;; add additional languages with '((language . t)))
 
-;; ================= C # =============================
-;; (package-install 'omnisharp)
-(require 'omnisharp)
-(use-package omnisharp)
-(eval-after-load
-  'company
-  '(add-to-list 'company-backends 'company-omnisharp))
-(add-hook 'csharp-mode-hook #'company-mode)
-(defun my-csharp-mode-setup ()
-  (omnisharp-mode)
-  (company-mode +1)
-  (set (make-local-variable 'company-backends)
-       '((company-omnisharp company-files :with company-yasnippet)
-         (company-dabbrev-code company-dabbrev)))
-  (flycheck-mode)
+;; ;; ================= C # =============================
+;; ;; (package-install 'omnisharp)
+;; (require 'omnisharp)
+;; (use-package omnisharp)
+;; (eval-after-load
+;;   'company
+;;   '(add-to-list 'company-backends 'company-omnisharp))
+;; (add-hook 'csharp-mode-hook #'company-mode)
+;; (defun my-csharp-mode-setup ()
+;;   (omnisharp-mode)
+;;   (company-mode +1)
+;;   (set (make-local-variable 'company-backends)
+;;        '((company-omnisharp company-files :with company-yasnippet)
+;;          (company-dabbrev-code company-dabbrev)))
+;;   (flycheck-mode)
 
-  (setq indent-tabs-mode nil)
-  (setq c-syntactic-indentation t)
-  (c-set-style "ellemtel")
-  (setq c-basic-offset 4)
-  (setq truncate-lines t)
-  (setq tab-width 4)
-  (setq evil-shift-width 4)
+;;   (setq indent-tabs-mode nil)
+;;   (setq c-syntactic-indentation t)
+;;   (c-set-style "ellemtel")
+;;   (setq c-basic-offset 4)
+;;   (setq truncate-lines t)
+;;   (setq tab-width 4)
+;;   (setq evil-shift-width 4)
 
-  ;csharp-mode README.md recommends this too
-  ;(electric-pair-mode 1)       ;; Emacs 24
-  ;(electric-pair-local-mode 1) ;; Emacs 25
+;;   ;csharp-mode README.md recommends this too
+;;   ;(electric-pair-mode 1)       ;; Emacs 24
+;;   ;(electric-pair-local-mode 1) ;; Emacs 25
 
-  (local-set-key (kbd "C-c r r") 'omnisharp-run-code-action-refactoring)
-  (local-set-key (kbd "C-c C-c") 'recompile))
+;;   (local-set-key (kbd "C-c r r") 'omnisharp-run-code-action-refactoring)
+;;   (local-set-key (kbd "C-c C-c") 'recompile))
 
-(add-hook 'csharp-mode-hook 'my-csharp-mode-setup t)
+;; (add-hook 'csharp-mode-hook 'my-csharp-mode-setup t)
 
-(add-hook 'csharp-mode-hook #'flycheck-mode)
-;;================= C ++ ============================
-(setq cquery-executable "/home/tocha/develop/cquery/cquery/build/release/bin/cquery")
+;; (add-hook 'csharp-mode-hook #'flycheck-mode)
 
-(defun cquery//enable ()
-  (condition-case nil
-      (lsp)
-    (user-error nil)))
-(require 'cquery)
-  (use-package cquery
-    :commands lsp
-    :init (add-hook 'c-mode-hook #'cquery//enable)
-    (add-hook 'c++-mode-hook #'cquery//enable))
-(setq company-transformers nil company-lsp-async t company-lsp-cache-candidates nil)
+;; ;;================= C ++ ============================
+;; (setq cquery-executable "/home/tocha/develop/cquery/cquery/build/release/bin/cquery")
+
+;; (defun cquery//enable ()
+;;   (condition-case nil
+;;       (lsp)
+;;     (user-error nil)))
+;; (require 'cquery)
+;;   (use-package cquery
+;;     :commands lsp
+;;     :init (add-hook 'c-mode-hook #'cquery//enable)
+;;     (add-hook 'c++-mode-hook #'cquery//enable))
+;; (setq company-transformers nil company-lsp-async t company-lsp-cache-candidates nil)
+
 ;;================= Real Gud  ============================
 
-(require 'realgud)
-;; (add-to-list 'display-buffer-alist
-;;              `(,(rx bos "*" "gdb " (+? nonl) "*" eos)
-;;                (display-buffer-in-side-window)
-;;                (reusable-frames . visible)
-;;                (side            . right)
-;;                (slot            . 1)
-;;                (window-width    . 0.5)))
+;; (require 'realgud)
+;; ;; (add-to-list 'display-buffer-alist
+;; ;;              `(,(rx bos "*" "gdb " (+? nonl) "*" eos)
+;; ;;                (display-buffer-in-side-window)
+;; ;;                (reusable-frames . visible)
+;; ;;                (side            . right)
+;; ;;                (slot            . 1)
+;; ;;                (window-width    . 0.5)))
 
-(defun cb-gud--setup-realgud-windows (&optional buffer)
-  (interactive)
-  (let* ((buffer (or buffer (current-buffer)))
-          (src-buffer (realgud-get-srcbuf buffer))
-          (cmd-buffer (realgud-get-cmdbuf buffer)))
-    (display-buffer cmd-buffer)
-    (select-window (display-buffer src-buffer))))
+;; (defun cb-gud--setup-realgud-windows (&optional buffer)
+;;   (interactive)
+;;   (let* ((buffer (or buffer (current-buffer)))
+;;           (src-buffer (realgud-get-srcbuf buffer))
+;;           (cmd-buffer (realgud-get-cmdbuf buffer)))
+;;     (display-buffer cmd-buffer)
+;;     (select-window (display-buffer src-buffer))))
 
-(with-eval-after-load 'realgud
-  (defalias 'realgud-window-src-undisturb-cmd #'cb-gud--setup-realgud-windows))
-(require 'subr-x)
+;; (with-eval-after-load 'realgud
+;;   (defalias 'realgud-window-src-undisturb-cmd #'cb-gud--setup-realgud-windows))
+;; (require 'subr-x)
 
-(defun cb-gud--realgud-command-for-mode (mode)
-  (pcase mode
-    (`python-mode
-      (lambda ()
-        (let* ((file (shell-quote-argument (file-relative-name (buffer-file-name))))
-               (args (list "python" "-m" "pdb" file)))
-          (realgud:run-process "pdb" (buffer-file-name) args 'realgud:pdb-minibuffer-history))))))
+;; (defun cb-gud--realgud-command-for-mode (mode)
+;;   (pcase mode
+;;     (`python-mode
+;;       (lambda ()
+;;         (let* ((file (shell-quote-argument (file-relative-name (buffer-file-name))))
+;;                (args (list "python" "-m" "pdb" file)))
+;;           (realgud:run-process "pdb" (buffer-file-name) args 'realgud:pdb-minibuffer-history))))))
 
-(defun realgud ()
-  (interactive)
-  (let ((buf (current-buffer)))
-    (unless (or (realgud-get-cmdbuf) (realgud-get-current-srcbuf))
-      (if-let (command (cb-gud--realgud-command-for-mode major-mode))
-          (funcall command)
-        (error "No realgud support for %s" major-mode)))
-    (cb-gud--setup-realgud-windows buf)))
-;;
-;;========================DAP-MODE===============
+;; (defun realgud ()
+;;   (interactive)
+;;   (let ((buf (current-buffer)))
+;;     (unless (or (realgud-get-cmdbuf) (realgud-get-current-srcbuf))
+;;       (if-let (command (cb-gud--realgud-command-for-mode major-mode))
+;;           (funcall command)
+;;         (error "No realgud support for %s" major-mode)))
+;;     (cb-gud--setup-realgud-windows buf)))
+;; ;;
+;; ;;========================DAP-MODE===============
 (require 'dap-gdb-lldb)
+
 (defun mattoch/debug ()
     (interactive)
     (dap-ui-mode)

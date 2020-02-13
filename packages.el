@@ -54,3 +54,4 @@
 (package! tide)
 (package! org)
 (package! dap-mode)
+(package! dap-gdb-lldb)
