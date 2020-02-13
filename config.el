@@ -95,6 +95,7 @@
 (add-hook 'web-mode-hook #'evil-smartparens-mode)
 
 ;; ======== JAVASCRIPT ========
+(require 'js2-mode)
 (use-package js2-mode
   :defer t
   :init
@@ -611,3 +612,12 @@ This is an `:around' advice for `yas--make-control-overlay'."
           (funcall command)
         (error "No realgud support for %s" major-mode)))
     (cb-gud--setup-realgud-windows buf)))
+;;
+;;========================DAP-MODE===============
+(require 'dap-gdb-lldb)
+(defun mattoch/debug ()
+    (interactive)
+    (dap-ui-mode)
+    (dap-ui-locals)
+    (dap-ui-sessions)
+    (dap-hydra))
